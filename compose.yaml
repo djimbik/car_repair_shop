@@ -1,0 +1,28 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      SERVICEFLOW_DATABASE_URL: sqlite:////data/serviceflow.db
+    volumes:
+      - serviceflow-data:/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+    restart: unless-stopped
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+
+volumes:
+  serviceflow-data:
