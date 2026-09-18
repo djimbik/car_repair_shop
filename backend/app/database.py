@@ -3,7 +3,7 @@ from pathlib import Path
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import QueuePool
 
 
 class Base(DeclarativeBase):
@@ -16,7 +16,9 @@ def create_database(url: str):
     if parsed.drivername.startswith("sqlite"):
         options["connect_args"] = {"check_same_thread": False, "timeout": 15}
         if parsed.database in (None, "", ":memory:"):
-            options["poolclass"] = StaticPool
+            # One connection keeps an in-memory DB alive. QueuePool lends it to only
+            # one session at a time; StaticPool would share a transaction across threads.
+            options.update(poolclass=QueuePool, pool_size=1, max_overflow=0)
         else:
             Path(parsed.database).parent.mkdir(parents=True, exist_ok=True)
     engine = create_engine(url, **options)

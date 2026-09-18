@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose up --build -d
+      - run: docker compose up --build -d --wait --wait-timeout 120
       - name: Verify the application and proxied API
         run: |
           curl --fail --retry 30 --retry-connrefused --retry-delay 2 http://localhost:3000/
